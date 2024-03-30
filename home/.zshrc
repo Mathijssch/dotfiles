@@ -1,6 +1,6 @@
 BASE_CONFIGS=$HOME/repos/dotfiles/home/shell
 SHARED_CONFIGS=$BASE_CONFIGS/shared
-CONFIGS=$BASE_CONFIGS/bash
+CONFIGS=$BASE_CONFIGS/zsh
 
 if [ -f $CONFIGS/init.sh ]; then
     source $CONFIGS/init.sh                                                                                  
