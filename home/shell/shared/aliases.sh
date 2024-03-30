@@ -1,8 +1,6 @@
-alias gnome-terminal=kitty
 alias vimconfig="nvim ~/.config/nvim"
 alias bashconfig="nvim ~/.bashrc"
 alias vim="nvim"
-
 
 
 # some more ls aliases
@@ -18,10 +16,11 @@ alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo
 # alias for easy ssh'ing
 alias lupor="ssh -J mschuurm@ssh.esat.kuleuven.be mschuurm@lupor"
 alias sista-nc-2="ssh -J mschuurm@ssh.esat.kuleuven.be mschuurm@sista-nc-2"
-alias push_notes="ssh lupor \"ssh-agent bash -c 'ssh-add /users/sista/mschuurm/.ssh/id_rsa_autogit; cd obsidian-notes; git pull; obs_build generate -m --force; ./move_web_output'\""
+#alias push_notes="ssh lupor \"ssh-agent bash -c 'ssh-add /users/sista/mschuurm/.ssh/id_rsa_autogit; cd obsidian-notes; git pull; obs_build generate -m --force; ./move_web_output'\""
 
 
 # zotero sync script
+
 alias zotsync="~/side-projects/zotero-sync/zotsync"
 
 

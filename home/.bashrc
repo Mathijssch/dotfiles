@@ -21,6 +21,5 @@ IFS=$'\n'       # Set the Internal Field Separator to newline
 for file in $FILES_STR; do
     #echo "Processing file: $file"
     source file
-    # Add your processing logic here
 done
 
