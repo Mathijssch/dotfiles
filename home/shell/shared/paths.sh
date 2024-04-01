@@ -10,10 +10,7 @@ export PATH=$PATH:/usr/local/go/bin
 
 
 export PATH=$PATH:/home/mathijs/.scripts/evince_synctex3
-export PATH=$PATH:/home/mathijs/side-projects/oxidian/target/release
-
-
-
+export PATH=$PATH:"$HOME/.cargo/bin"
 
 . "$HOME/.cargo/env"
 
