@@ -1,4 +1,5 @@
-BASE_CONFIGS=$HOME/repos/dotfiles/home/shell
+source ~/path.env
+BASE_CONFIGS=$DOTFILES/home/shell
 SHARED_CONFIGS=$BASE_CONFIGS/shared
 CONFIGS=$BASE_CONFIGS/zsh
 
