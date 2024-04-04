@@ -1,3 +1,5 @@
+[ -z "$PS1" ] && return
+
 source $HOME/path.env
 BASE_CONFIGS=$DOTFILES/home/shell
 SHARED_CONFIGS=$BASE_CONFIGS/shared

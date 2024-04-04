@@ -38,9 +38,9 @@ function servenotes {
   kill $oxidian_pid
 }
 
-function servenotes_get {
+function servenotes_get() {
   export RUST_LOG=info
-  oxidian watch $NOTES_DIR_GET & oxidian_pid=$!
+  oxidian watch $1 $NOTES_DIR_GET & oxidian_pid=$! # Do full updates, it's just a small notebook
   live-server "${NOTES_DIR_GET}_out" #& server_pid=$!
 
   kill $oxidian_pid

@@ -40,5 +40,7 @@ xmodmap -e "keycode 109="
 PROMPT_COMMAND='echo -ne "\033]0;$(basename "${PWD}")\007"'
 # ------------------------------------------------
 
-bind 'set show-all-if-ambiguous on'
-bind 'TAB:menu-complete'
+if [ -t 1 ]; then
+	bind 'set show-all-if-ambiguous on'
+	bind 'TAB:menu-complete'
+fi
