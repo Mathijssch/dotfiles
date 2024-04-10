@@ -20,9 +20,9 @@ function notes_old {
 
 
 function sketchwatch() {
-    cd "~/utilities/sketchwatch"
+    cd "$HOME/utilities/sketchwatch"
     . actie 
-    if [ $1 == "get" ]; then 
+    if [ "$1" = "get" ]; then 
         output=$NOTES_DIR_GET
     else 
         output=$NOTES_DIR
