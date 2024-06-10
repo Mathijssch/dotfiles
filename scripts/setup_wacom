@@ -1,0 +1,8 @@
+#/usr/bash
+
+if [ $1 = right ]
+then 
+    xsetwacom --set "Wacom Graphire4 6x8 Pen stylus" area -12500 0 15200 12064
+else 
+    xsetwacom --set "Wacom Graphire4 6x8 Pen stylus" area 0 0 37000 12064
+fi 

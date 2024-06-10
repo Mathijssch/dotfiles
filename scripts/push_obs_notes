@@ -1,0 +1,1 @@
+ssh-agent $(ssh-add ~/.ssh/id_rsa; ssh lupor "ssh-agent bash -c 'cd obsidian-notes; ssh-add /users/sista/mschuurm/.ssh/id_rsa_autogit; git pull; obs_build generate --force -m'")

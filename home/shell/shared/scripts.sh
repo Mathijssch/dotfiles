@@ -1,6 +1,6 @@
-if [ -d ~/.scripts ]; then
+if [ -d "$DOTFILES/scripts" ]; then
     # alias fzfall="cd $(find ~/Work/Research/* -type d | fzf)"
-    source ~/.scripts/quickfind.sh # Defines some search functions
+    source "$DOTFILES/scripts/quickfind.sh" # Defines some search functions
 
 fi
 

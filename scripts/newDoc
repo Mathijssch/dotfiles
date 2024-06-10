@@ -1,0 +1,91 @@
+#!/bin/bash
+
+DEFAULTNAME="LatexDocument"
+
+display_usage() {
+  echo
+  echo "Usage: $0 [-h] [dir] [name]"
+  echo
+  echo " -h,   Display help message to show the usage"
+  echo " dir,  Relative directory to make new project at. Default: current directory"
+  echo " name, Name of the new project. Default: $DEFAULTNAME"
+  echo
+  echo "This script makes a new directory and populates it with some default directory structure and LaTeX document templates."
+  exit 0; 
+}
+
+if [ "$1"  = "-h" ]; then
+	display_usage
+else 
+	if [ "$1" != "" ]; then 
+		DIR=$1
+	else
+		DIR=$(pwd)
+	fi 
+	if [ "$2" != "" ]; then
+		NAME="$2"
+	else
+		NAME="$DEFAULTNAME"
+	fi
+fi
+
+DIR=$(readlink --canonicalize "$DIR/$NAME")
+
+if [ -d $DIR ]; then 
+	read -p "Directory $DIR exists already. Do you want to overwrite it? Y/[N]" permission
+	if [ "$permission" = "Y" ]; then 
+		echo "Ok. I'll move $DIR somewhere safe in case you need it later."
+		currdatetime=$(date '+%Y%m%d__%H_%M_%S');
+		SAFEDIR="$HOME/.salvaged/$currdatetime"
+		mkdir -p $SAFEDIR
+		mv $DIR/* $SAFEDIR 
+		rm -rf $DIR
+		echo "----------------------------------------"
+		echo "Moved the contents of $DIR to $SAFEDIR." 
+		echo "----------------------------------------"
+	fi
+else
+	permission=Y
+fi
+
+if [ "$permission" = "Y" ]; then 
+	echo "Making a LaTex Project in $DIR"
+	mkdir -p $DIR
+
+	# Names of directories and files to make
+	SECTIONS="Sections"
+	TIKZ="Tikz"
+	FIGURES="Figures"
+	ABSTRACT="$DIR/$SECTIONS/abstract.tex"
+	INTRO="$DIR/$SECTIONS/intro.tex"
+	APPENDIX="$DIR/$SECTIONS/appendix.tex"
+
+	SHEBANG="%!TEX root=../$NAME.tex" 
+
+	# Copy contents of my template 
+	echo "Copying templates over from ~/.LatexTemplate/"
+	cp -r ~/.LatexTemplate/* $DIR
+	mv $DIR/main.tex "$DIR/$NAME.tex"
+
+	echo "Adding references.bib"
+	touch "$DIR/references.bib"
+	
+	echo "Making and populating Sections/ directory."
+	mkdir $DIR/$SECTIONS
+	echo "$SHEBANG" >> $ABSTRACT
+	echo "$SHEBANG" >> $INTRO
+	echo "$SHEBANG" >> $APPENDIX
+
+	echo "Making Tikz/ and Figures/ directories."
+	mkdir $DIR/$TIKZ
+	mkdir $DIR/$FIGURES
+
+
+	command -v tree || { echo "I wanted to show you the directory tree, but you don't have tree installed, so I'll just call it a day"; exit 1;}
+	echo "Here is the final directory structure"
+	tree $DIR
+
+	echo "All done! Now get to work!"
+else
+	echo "Aborting mission!"
+fi
