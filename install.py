@@ -1,9 +1,11 @@
 import pathlib  # Glob module does not detect dotfiles.
 import os
 import warnings
+import difflib
 
 HOME_DIR = "home"
 EXCLUDE_PATH = os.path.join(HOME_DIR, ".exclude")
+DOTFILES = "DOTFILES"
 
 
 def get_exclude_list() -> list[str]:
@@ -23,6 +25,31 @@ def excluded(exclude_list: list[str], file: str):
     return os.path.split(file)[1] in exclude_list
 
 
+def set_path():
+
+    current_dir = os.path.split(os.path.abspath(__file__))[0]
+    path_file = os.path.join(current_dir, "home", "path.env")
+    new_line = f"DOTFILES={current_dir}"
+    if os.path.isfile(path_file):
+        with open(path_file, "r") as f:
+            lines = f.readlines()
+
+        if "\n".join(lines) == new_line:
+            return
+
+        cmp = [new_line]
+        print(f"File {path_file} exists")
+        d = difflib.Differ()
+        diff = d.compare(lines, cmp)
+        diff_print = '\n'.join(diff)
+        response = input(f"Make the following change?\n{diff_print}\n[y/N]")
+        if response != "y":
+            print("Keeping the old value.")
+            return
+    with open(path_file, "w") as f:
+        f.write(new_line)
+
+
 def main():
     stats = dict(files_detected=0,
                  ignored=0,
@@ -30,6 +57,7 @@ def main():
                  not_a_file=0,
                  already_existing=0)
     exclude_list = get_exclude_list()
+    set_path()
     for fileref in pathlib.Path(".").glob(f"{HOME_DIR}/*"):
         file = str(fileref)
         print(f"Processing {file}")

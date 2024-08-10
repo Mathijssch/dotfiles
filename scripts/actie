@@ -1,0 +1,31 @@
+#!/usr/bin/bash
+
+dirs=$(find . -type f -name "activate" -path "*/bin/*" -exec dirname {} \; | sort -u)
+dirs=$(echo "$dirs" | xargs -I{} dirname {} | sort -u)
+
+# Check if there are no directories found
+if [ -z "$dirs" ]; then
+    echo "No Python venvs found in the current directory."
+else 
+    # Count the number of directories found
+    num_dirs=$(echo "$dirs" | wc -l)
+
+    # If there is only one directory found, source its activate script
+    if [ "$num_dirs" -eq 1 ]; then
+        dir=$(echo "$dirs" | head -n 1)
+        source "$dir/bin/activate"
+    else
+        # If there are multiple directories found, prompt the user to select one
+        echo "Multiple venvs found"
+        #echo "$dirs"
+        echo "Select which one to use: "
+        select dir in $dirs; do
+            if [ -n "$dir" ]; then
+                source "$dir/bin/activate"
+                break
+            else
+                echo "Invalid selection, please try again."
+            fi
+        done
+    fi
+fi

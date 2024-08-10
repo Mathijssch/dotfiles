@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# Make sure keychain is installed. 
+# If not: `sudo apt-get install keychain`
+# Otherwise, it will not be possible to run this script as a cronjob. 
+keychain --noask --eval id_rsa_ESAT
+
+source ~/.keychain/$HOSTNAME-sh
+
+MONTH=$(date +%B)
+YEAR=$(date +%Y)
+
+BACKUP_DIR=local_storage/AUTOBACKUPS/$MONTH-$YEAR
+
+if [ -d mschuurm@lupor:/users/sista/mschuurm/$BACKUP_DIR ]; then
+	: 
+else
+	mkdir -p $BACKUP_DIR
+fi 
+
+echo "Saving backup to $BACKUP_DIR" 
+
+
+IGNOREFILE="$DOTFILES/scripts/.backupignore"
+
+if [ -f $IGNOREFILE ]; then 
+	echo "Ignoring files in $IGNOREFILE"
+	EXCLUDE_ARG="--exclude-from=$IGNOREFILE"
+else
+	echo "Not ignoring any files!"
+	EXCLUDE_ARG=""
+fi
+
+rsync -a $EXCLUDE_ARG ~/Work/ mschuurm@lupor:$BACKUP_DIR
+if [ $? == 0 ];  then 
+	echo "Backup successful."
+else 
+	echo "Something went wrong during backup! rsync returned exit code $?"
+fi 

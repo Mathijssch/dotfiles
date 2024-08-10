@@ -1,0 +1,21 @@
+#!/usr/bin/env python3
+
+import subprocess
+import sys
+
+key = "org.gnome.desktop.input-sources"
+def get(cmd): return subprocess.check_output(["/bin/bash", "-c", cmd]).decode("utf-8").strip()
+
+
+src_list = len(eval(get("gsettings get " + key + " sources"))) - 1
+current = int(get("gsettings get " + key + " current").split()[-1])
+
+if current == 0:
+    print("current = 0")
+else:
+
+    # dummy=
+    #     set_new_value = "gsettings set "+key+" current "+(str(current+1) if current <  src_list else "0")
+    # elif src == "-":
+    #     set_new_value = "gsettings set "+key+" current "+(str(current-1) if current > 0 else str(src_list))
+    # subprocess.Popen(["/bin/bash","-c", set_new_value])

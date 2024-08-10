@@ -1,0 +1,27 @@
+cleanup () { 
+	# $1: foldername 
+	# $2: glob specifying files 
+	
+	if [ ! -d $1 ]; then 
+		echo "Making dir $1"
+		mkdir $1 
+	fi 
+
+	for filename in $2; do 
+		if [ -f "$filename" ]; then 
+			echo "Matched file for $1: $filename"
+			mv "$filename" "$1/$(basename "$filename")"
+		fi 
+	done 
+}
+
+DOWNLOADS=$HOME/Downloads
+cd $DOWNLOADS
+
+pdfs="pdf_files"
+archives="compressed_folders"
+
+cleanup "pdf_files" "*.pdf *.djvu *.ps"
+cleanup "compressed_folders" "*.gz *.zip *.deb *.tar.* *.xz *.xpi"
+
+cleanup "docs_spreadsheets", "*.doc? *.xls? *.gsheet *.csv"

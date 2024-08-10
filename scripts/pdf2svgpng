@@ -1,0 +1,3 @@
+convert -verbose -density 200 -quality 100 -flatten -sharpen 0x1.0 $1.pdf $1_hidpi.png
+convert -density 200 -transparent white $1.pdf $1.png
+pdf2svg $1.pdf $1.svg

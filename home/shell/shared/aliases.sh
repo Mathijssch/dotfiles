@@ -1,5 +1,5 @@
 alias vimconfig="nvim ~/.config/nvim"
-alias bashconfig="nvim ~/.bashrc"
+alias bashconfig="nvim $DOTFILES"
 alias vim="nvim"
 
 

@@ -1,0 +1,5 @@
+#!/bin/bash
+
+cd ~/Work/Obsidian-notes
+echo "Arguments in " ${@:2}
+bash ./$1 ${@:2}
