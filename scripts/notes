@@ -6,14 +6,6 @@ import os
 DEFAULT_EDITOR = "nvim"
 
 
-# def create_json_file():
-#     notes_repo = get_notes_repo_path()
-#     dirname, filename = os.path.split(notes_repo)
-#     os.makedirs(dirname, exist_ok=True)
-#     with open(notes_repo, "w") as f:
-#         f.write("")
-
-
 def get_dotfiles_location():
     dotfiles = os.environ.get("DOTFILES")
     if dotfiles is None:
@@ -44,9 +36,13 @@ def load_notes() -> dict:
     return result
 
 
-def request_new_path(name: str, output: bool = False) -> str:
+def request_new_path(name: str, output: bool = False, default: str = None) -> str:
     out_str = "output directory" if output else "directory that contains `index.md`"
-    new_path = input(f"Path to notebook {name} ({out_str})\n")
+    default_str = f"\ndefault: {default}" if default is not None else ""
+    new_path = input(f"Path to notebook {name} ({out_str}){default_str}\n")
+    if not new_path and default_str is not None:
+        new_path = default
+    new_path = os.path.expanduser(new_path)
     success = True
     while (not os.path.isdir(new_path)) and success:
         new_path = input("Given path is not an existing directory. Try again (leave empty to abort):\n")
@@ -61,28 +57,50 @@ def get_key(output: bool):
     return "dist" if output else "src"
 
 
+def get_existing_path(name: str, notebooks: dict, output: bool = False):
+    notebook_path = notebooks[name]
+    if isinstance(notebook_path, dict):
+        return str(notebook_path[get_key(output)])
+    if isinstance(notebook_path, str):
+        if output:
+            raise KeyError()
+        return notebook_path
+
+
+def reset_path(name: str, notebooks: dict, output: bool = False, default: str = None) -> str:
+    key = get_key(output)
+
+    try_new_default = (default is None) and output and (name in notebooks)
+
+    if try_new_default:
+        default = get_existing_path(name, output, False) + "_out"
+    new_path = request_new_path(name, output, default)
+
+    if name not in notebooks:
+        notebooks[name] = {key: new_path}
+        return new_path
+
+    existing = notebooks[name]
+    if isinstance(existing, dict):
+        notebooks[name][key] = new_path
+    else:
+        current = {get_key(False): existing}
+        current[key] = new_path
+        notebooks[name] = current
+    return new_path
+
+
 def get_notebook_path(name: str, notebooks: dict, output: bool = False) -> str:
     key = get_key(output)
     try:
-        notebook_path = notebooks[name]
-        if isinstance(notebook_path, dict):
-            return str(notebook_path[key])
-        if isinstance(notebook_path, str):
-            notebook_path[name] = dict(src=notebook_path)
-            if output:
-                raise KeyError()
-            return notebook_path
+        new_path = get_existing_path(name, notebooks, output)
     except KeyError:
         response = input(f"No '{key}' is provided for '{name}' in '{get_notes_repo_path()}'. Add it [Y/n]?")
         if response.lower() == "n":
             print("Aborting.")
             exit(1)
-        new_path = request_new_path(name, output)
-        if name in notebooks:
-            notebooks[name][key] = new_path
-        else:
-            notebooks[name] = {key: new_path}
-        return str(new_path)
+        new_path = reset_path(name, notebooks, output)
+    return str(new_path)
 
 
 def sketch_watch(input_dir: str):
@@ -166,8 +184,13 @@ def sketch_notebook(name: str, notebooks: dict):
 
 
 def define_notebook(name: str, notebooks: dict, **kwargs):
-    get_notebook_path(name, notebooks, False)
-    get_notebook_path(name, notebooks, True)
+    default = None
+    try:
+        default = get_existing_path(name, notebooks, False)
+    except KeyError:
+        pass
+    new_path = reset_path(name, notebooks, False, default)
+    reset_path(name, notebooks, True, default=new_path + "_out")
     save_notebooks(notebooks)
 
 
@@ -203,7 +226,7 @@ if __name__ == "__main__":
         "list": list_notebooks
     }
 
-    parser.add_argument(dest="cmd", default="default", nargs="?", choices=list(commands.keys()), help="Action to perform")
+    parser.add_argument(dest="cmd", default="edit", nargs="?", choices=list(commands.keys()), help="Action to perform")
     parser.add_argument(dest="name", default="default", nargs="?", help=f"Descriptor of the notebook you want to open. Known notebooks: {', '.join([k for k in notebooks.keys()])}")
     args = parser.parse_args()
     requested_notebook = args.name
