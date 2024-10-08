@@ -1,6 +1,7 @@
 alias vimconfig="nvim ~/.config/nvim"
 alias bashconfig="nvim $DOTFILES"
 alias vim="nvim"
+alias tt="timetagger"
 
 
 # some more ls aliases
