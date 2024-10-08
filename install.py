@@ -26,6 +26,7 @@ def excluded(exclude_list: list[str], file: str):
 
 
 def set_path():
+    """Collect the current path and write it to the DOTENV environment variable in path.env"""
 
     current_dir = os.path.split(os.path.abspath(__file__))[0]
     path_file = os.path.join(current_dir, "home", "path.env")
