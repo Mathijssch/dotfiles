@@ -2,7 +2,6 @@ import pathlib  # Glob module does not detect dotfiles.
 import os
 import warnings
 import difflib
-
 HOME_DIR = "home"
 EXCLUDE_PATH = os.path.join(HOME_DIR, ".exclude")
 DOTFILES = "DOTFILES"
@@ -26,10 +25,11 @@ def excluded(exclude_list: list[str], file: str):
 
 
 def set_path():
+    """Collect the current path and write it to the DOTENV environment variable in path.env"""
 
     current_dir = os.path.split(os.path.abspath(__file__))[0]
     path_file = os.path.join(current_dir, "home", "path.env")
-    new_line = f"DOTFILES={current_dir}"
+    new_line = f"export DOTFILES={current_dir}"
     if os.path.isfile(path_file):
         with open(path_file, "r") as f:
             lines = f.readlines()
@@ -51,17 +51,18 @@ def set_path():
 
 
 def main():
-    stats = dict(files_detected=0,
-                 ignored=0,
-                 links_created=0,
-                 not_a_file=0,
-                 already_existing=0)
+    stats = {"files detected": 0,
+             "files ignored": 0,
+             "links created": 0,
+             "not a file": 0,
+             "already existing": 0
+             }
     exclude_list = get_exclude_list()
     set_path()
     for fileref in pathlib.Path(".").glob(f"{HOME_DIR}/*"):
         file = str(fileref)
         print(f"Processing {file}")
-        stats["files_detected"] += 1
+        stats["files detected"] += 1
         if excluded(exclude_list, file):
             print(f"Excluding {file}")
             stats["ignored"] += 1
@@ -69,7 +70,7 @@ def main():
         file = os.path.abspath(file)
         if not os.path.isfile(file):
             print(f"{file} is not a file")
-            stats["not_a_file"] += 1
+            stats["not a file"] += 1
             continue
 
         link = os.path.expanduser((os.path.join("~", os.path.split(file)[1])))
@@ -80,11 +81,11 @@ def main():
             if response == "y":
                 os.rename(link, backup_file)
             else:
-                stats["already_existing"] += 1
+                stats["already existing"] += 1
                 continue
         print(f"Creating symlink {link} -> {file}")
         os.symlink(file, link)
-        stats["links_created"] += 1
+        stats["links created"] += 1
 
     print("-" * 80)
     for key, value in stats.items():

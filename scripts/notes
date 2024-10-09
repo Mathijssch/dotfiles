@@ -1,0 +1,235 @@
+#!/usr/bin/env python3
+"""Launch oxidian notes."""
+import json
+import os
+
+DEFAULT_EDITOR = "nvim"
+
+
+def get_dotfiles_location():
+    dotfiles = os.environ.get("DOTFILES")
+    if dotfiles is None:
+        print("The dotfiles aren't installed correctly: No environment variable DOTFILES. Run install.py in the dofiles repo, and reopen the shell.")
+        exit(1)
+    return dotfiles
+
+
+def get_notes_repo_path():
+    dotfiles = get_dotfiles_location()
+    notes_repo = os.path.join(dotfiles, "home", "notes.json")
+    return notes_repo
+
+
+def load_notes() -> dict:
+    notes_repo = get_notes_repo_path()
+    if not os.path.isfile(notes_repo):
+        return {}
+
+    with open(notes_repo, "r") as f:
+        try:
+            result = json.load(f)
+        except json.decoder.JSONDecodeError:
+            response = input(f"Could not decode the json file {notes_repo}. Overwrite it? [y/N]")
+            if response.lower() != "y":
+                exit(1)
+            return {}
+    return result
+
+
+def request_new_path(name: str, output: bool = False, default: str = None) -> str:
+    out_str = "output directory" if output else "directory that contains `index.md`"
+    default_str = f"\ndefault: {default}" if default is not None else ""
+    new_path = input(f"Path to notebook {name} ({out_str}){default_str}\n")
+    if not new_path and default_str is not None:
+        new_path = default
+    new_path = os.path.expanduser(new_path)
+    success = True
+    while (not os.path.isdir(new_path)) and success:
+        new_path = input("Given path is not an existing directory. Try again (leave empty to abort):\n")
+        success = len(new_path) > 0
+    if not success:
+        print("Aborting.")
+        exit(1)
+    return new_path
+
+
+def get_key(output: bool):
+    return "dist" if output else "src"
+
+
+def get_existing_path(name: str, notebooks: dict, output: bool = False):
+    notebook_path = notebooks[name]
+    if isinstance(notebook_path, dict):
+        return str(notebook_path[get_key(output)])
+    if isinstance(notebook_path, str):
+        if output:
+            raise KeyError()
+        return notebook_path
+
+
+def reset_path(name: str, notebooks: dict, output: bool = False, default: str = None) -> str:
+    key = get_key(output)
+
+    try_new_default = (default is None) and output and (name in notebooks)
+
+    if try_new_default:
+        default = get_existing_path(name, output, False) + "_out"
+    new_path = request_new_path(name, output, default)
+
+    if name not in notebooks:
+        notebooks[name] = {key: new_path}
+        return new_path
+
+    existing = notebooks[name]
+    if isinstance(existing, dict):
+        notebooks[name][key] = new_path
+    else:
+        current = {get_key(False): existing}
+        current[key] = new_path
+        notebooks[name] = current
+    return new_path
+
+
+def get_notebook_path(name: str, notebooks: dict, output: bool = False) -> str:
+    key = get_key(output)
+    try:
+        new_path = get_existing_path(name, notebooks, output)
+    except KeyError:
+        response = input(f"No '{key}' is provided for '{name}' in '{get_notes_repo_path()}'. Add it [Y/n]?")
+        if response.lower() == "n":
+            print("Aborting.")
+            exit(1)
+        new_path = reset_path(name, notebooks, output)
+    return str(new_path)
+
+
+def sketch_watch(input_dir: str):
+    import subprocess
+    dotfiles = get_dotfiles_location()
+    sketchwatch_dir = os.path.join(dotfiles, "scripts", "sketchwatch")
+    sketchwatch_interpreter = os.path.join(sketchwatch_dir, "venv", "bin", "python")
+    script_path = os.path.join(sketchwatch_dir, "autocopy.py")
+    input_path = os.path.expanduser("~/Dropbox/Sketches")
+    subprocess.Popen([sketchwatch_interpreter, script_path, "-i", input_path, "-o", f"{input_dir}/Attachments"])
+
+
+def oxidian_watch_and_live_server(input_dir: str, output_dir: str):
+    import subprocess
+    import shutil
+
+    os.environ['RUST_LOG'] = 'info'
+
+    try:
+        oxidian_proc = subprocess.Popen(['oxidian', 'watch', input_dir])
+
+        if shutil.which('live-server') is None:
+            print("Error: 'live-server' is not installed. Please install it and try again.")
+            return
+        subprocess.run(['live-server', output_dir])
+
+    finally:
+        # Kill the `oxidian` process after live-server finishes
+        print("\nKilling oxidian watch ...")
+        oxidian_proc.kill()
+        oxidian_proc.wait()
+        print("\nDONE.")
+
+
+def save_notebooks(notebooks: dict):
+    file = get_notes_repo_path()
+    if not os.path.isfile(file):
+        dirname, filename = os.path.split(file)
+        os.makedirs(dirname, exist_ok=True)
+
+    with open(file, "w") as f:
+        json.dump(notebooks, f, indent=2)
+
+
+def validate(name: str, path: str, notebooks: dict, backup: callable):
+    if not os.path.isdir(str(path)):
+        response = input(f"The directory {path} is not an existing directory. Do you want to replace it? [Y/n]")
+        if response.lower() != "n":
+            notebooks.pop(name)
+            return backup(name, notebooks)
+        print("Aborting")
+        exit(1)
+
+
+# Commands......................................................................
+
+def open_notebook(name: str, notebooks: dict, **kwargs):
+    import subprocess
+    notebook_path = get_notebook_path(name, notebooks)
+    save_notebooks(notebooks)
+    validate(name, notebook_path, notebooks, open_notebook)
+    os.chdir(notebook_path)
+    editor = os.environ.get('EDITOR', DEFAULT_EDITOR)
+    subprocess.call([editor, "."])
+
+
+def serve_notebook(name: str, notebooks: dict, sketch: bool = False):
+    input_path = get_notebook_path(name, notebooks, False)
+    output_path = get_notebook_path(name, notebooks, True)
+    save_notebooks(notebooks)
+    validate(name, input_path, notebooks, serve_notebook)
+    validate(name, output_path, notebooks, serve_notebook)
+    oxidian_watch_and_live_server(input_path, output_path)
+
+
+def sketch_notebook(name: str, notebooks: dict):
+    input_path = get_notebook_path(name, notebooks, False)
+    save_notebooks(notebooks)
+    validate(name, input_path, notebooks, serve_notebook)
+    sketch_watch(input_path)
+
+
+def define_notebook(name: str, notebooks: dict, **kwargs):
+    default = None
+    try:
+        default = get_existing_path(name, notebooks, False)
+    except KeyError:
+        pass
+    new_path = reset_path(name, notebooks, False, default)
+    reset_path(name, notebooks, True, default=new_path + "_out")
+    save_notebooks(notebooks)
+
+
+def list_notebooks(name: str, notebooks: dict, **kwargs):
+    def fmt(line, widths):
+        print(" | ".join([format(h, f'{w}s') for w, h in zip(widths, line)]))
+
+    header = ["name", "src", "dst"]
+    lines = []
+    widths = [len(h) for h in header]
+    for key, value in notebooks.items():
+        src = get_notebook_path(key, notebooks, False)
+        dst = get_notebook_path(key, notebooks, True)
+        newline = [key, src, dst]
+        lines.append(newline)
+        widths = [max(w, len(l)) for w, l in zip(widths, newline)]
+
+    fmt(header, widths)
+    for line in lines:
+        fmt(line, widths)
+
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description="Open your notes.")
+    notebooks = load_notes()
+
+    commands = {
+        "define": define_notebook,
+        "serve": serve_notebook,
+        "edit": open_notebook,
+        "sketch": sketch_notebook,
+        "list": list_notebooks
+    }
+
+    parser.add_argument(dest="cmd", default="edit", nargs="?", choices=list(commands.keys()), help="Action to perform")
+    parser.add_argument(dest="name", default="default", nargs="?", help=f"Descriptor of the notebook you want to open. Known notebooks: {', '.join([k for k in notebooks.keys()])}")
+    args = parser.parse_args()
+    requested_notebook = args.name
+
+    cmd = commands.get(args.cmd, open_notebook)
+    cmd(requested_notebook, notebooks)
