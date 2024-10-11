@@ -103,24 +103,24 @@ def get_notebook_path(name: str, notebooks: dict, output: bool = False) -> str:
     return str(new_path)
 
 
-def sketch_watch(input_dir: str):
+def sketch_watch(input_dir: str, cli_args: list[str]):
     import subprocess
     dotfiles = get_dotfiles_location()
     sketchwatch_dir = os.path.join(dotfiles, "scripts", "sketchwatch")
     sketchwatch_interpreter = os.path.join(sketchwatch_dir, "venv", "bin", "python")
     script_path = os.path.join(sketchwatch_dir, "autocopy.py")
     input_path = os.path.expanduser("~/Dropbox/Sketches")
-    subprocess.Popen([sketchwatch_interpreter, script_path, "-i", input_path, "-o", f"{input_dir}/Attachments"])
+    subprocess.Popen([sketchwatch_interpreter, script_path, "-i", input_path, "-o", f"{input_dir}/Attachments"] + cli_args)
 
 
-def oxidian_watch_and_live_server(input_dir: str, output_dir: str):
+def oxidian_watch_and_live_server(input_dir: str, output_dir: str, cli_args: list[str]):
     import subprocess
     import shutil
 
     os.environ['RUST_LOG'] = 'info'
 
     try:
-        oxidian_proc = subprocess.Popen(['oxidian', 'watch', input_dir])
+        oxidian_proc = subprocess.Popen(['oxidian', 'watch', input_dir] + cli_args)
 
         if shutil.which('live-server') is None:
             print("Error: 'live-server' is not installed. Please install it and try again.")
@@ -167,20 +167,20 @@ def open_notebook(name: str, notebooks: dict, **kwargs):
     subprocess.call([editor, "."])
 
 
-def serve_notebook(name: str, notebooks: dict, sketch: bool = False):
+def serve_notebook(name: str, notebooks: dict, cli_args: list[str], **kwargs):
     input_path = get_notebook_path(name, notebooks, False)
     output_path = get_notebook_path(name, notebooks, True)
     save_notebooks(notebooks)
     validate(name, input_path, notebooks, serve_notebook)
     validate(name, output_path, notebooks, serve_notebook)
-    oxidian_watch_and_live_server(input_path, output_path)
+    oxidian_watch_and_live_server(input_path, output_path, cli_args)
 
 
-def sketch_notebook(name: str, notebooks: dict):
+def sketch_notebook(name: str, notebooks: dict, cli_args: list[str], **kwargs):
     input_path = get_notebook_path(name, notebooks, False)
     save_notebooks(notebooks)
     validate(name, input_path, notebooks, serve_notebook)
-    sketch_watch(input_path)
+    sketch_watch(input_path, cli_args)
 
 
 def define_notebook(name: str, notebooks: dict, **kwargs):
@@ -228,8 +228,8 @@ if __name__ == "__main__":
 
     parser.add_argument(dest="cmd", default="edit", nargs="?", choices=list(commands.keys()), help="Action to perform")
     parser.add_argument(dest="name", default="default", nargs="?", help=f"Descriptor of the notebook you want to open. Known notebooks: {', '.join([k for k in notebooks.keys()])}")
-    args = parser.parse_args()
+    args, unknown_args = parser.parse_known_args()
     requested_notebook = args.name
 
     cmd = commands.get(args.cmd, open_notebook)
-    cmd(requested_notebook, notebooks)
+    cmd(requested_notebook, notebooks, cli_args=unknown_args)
