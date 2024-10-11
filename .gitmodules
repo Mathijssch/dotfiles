@@ -1,3 +1,6 @@
 [submodule ".config/nvim"]
 	path = .config/nvim
 	url = git@github.com:Mathijssch/nvim-config.git
+[submodule ".config/espanso"]
+	path = .config/espanso
+	url = git@github.com:Mathijssch/espanso-config.git
