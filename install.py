@@ -25,12 +25,17 @@ def excluded(exclude_list: list[str], file: str):
     return os.path.split(file)[1] in exclude_list
 
 
+def _get_curr_dir() -> str:
+    return os.path.split(os.path.abspath(__file__))[0]
+
+
 def set_path():
     """Collect the current path and write it to the DOTENV environment variable in path.env"""
 
-    current_dir = os.path.split(os.path.abspath(__file__))[0]
+    current_dir = _get_curr_dir()
     path_file = os.path.join(current_dir, "home", "path.env")
     new_line = f"export DOTFILES={current_dir}"
+
     if os.path.isfile(path_file):
         with open(path_file, "r") as f:
             lines = f.readlines()
@@ -129,8 +134,30 @@ def create_links_to_configs():
     _print_stats(stats)
 
 
+def set_timetagger():
+    curdir = _get_curr_dir()
+    timetagger_env = os.path.join(curdir, "timetagger.env")
+    if os.path.isfile(timetagger_env):
+        with open(timetagger_env, "r") as f:
+            timetagger_line = f.read()
+        if timetagger_line:
+            try:
+                timetagger = timetagger_line.split("=")[-1].strip()
+                if os.path.isdir(timetagger):
+                    return
+            except IndexError():
+                pass
+    new_path = input("Where is timetagger installed? (leave empty to ignore): ")
+    if new_path:
+        with open(timetagger_env, "w") as f:
+            new_line = f"export TIMETAGGER_PATH={new_path}"
+            print(f"Writing '{new_line}' to '{timetagger_env}'")
+            f.write(new_line)
+
+
 def main():
     set_path()
+    set_timetagger()
     create_links_to_home()
     create_links_to_configs()
 
