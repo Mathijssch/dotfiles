@@ -1,6 +1,9 @@
-if [ -z "$TIMETAGGER_DIR" ]; then
+#!/usr/bin/env bash
+
+if [ -z "$TIMETAGGER_PATH" ]; then
   echo "Could not find TIMETAGGER. Exiting."
   exit 1
+fi
 
-source $TIMETAGGER_DIR/.venv/bin/activate
+source $TIMETAGGER_PATH/.venv/bin/activate
 timetagger "$@"
