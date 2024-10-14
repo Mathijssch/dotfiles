@@ -1,0 +1,6 @@
+if [ -z "$TIMETAGGER_DIR" ]; then
+  echo "Could not find TIMETAGGER. Exiting."
+  exit 1
+
+source $TIMETAGGER_DIR/.venv/bin/activate
+timetagger "$@"
