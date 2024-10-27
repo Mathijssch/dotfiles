@@ -1,7 +1,17 @@
 #!/usr/bin/bash
 
-dirs=$(find . -type f -name "activate" -path "*/bin/*" -exec dirname {} \; | sort -u)
+dirs=$(find . -type f -name "activate" -path "*/bin/*" -exec dirname {} \;)
 dirs=$(echo "$dirs" | xargs -I{} dirname {} | sort -u)
+
+
+function activate() {
+    if [ -n "$1" ]; then
+        source "$1/bin/activate"
+        break
+    else
+        echo "Invalid selection, please try again."
+    fi
+}
 
 # Check if there are no directories found
 if [ -z "$dirs" ]; then
@@ -19,13 +29,15 @@ else
         echo "Multiple venvs found"
         #echo "$dirs"
         echo "Select which one to use: "
-        select dir in $dirs; do
-            if [ -n "$dir" ]; then
-                source "$dir/bin/activate"
-                break
-            else
-                echo "Invalid selection, please try again."
-            fi
-        done
+        if [ -n "$ZSH_VERSION" ]; then
+            dirs_array=("${(f)dirs}")
+            select dir in "${dirs_array[@]}"; do
+                activate $dir
+            done
+        else
+            select dir in "$dirs"; do
+                activate $dir
+            done
+        fi
     fi
 fi
