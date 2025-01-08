@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Usage: ./clip_video.sh input_file output_file start_time duration
+
+input_file="$1"
+output_file="$2"
+start_time="$3"  # Format: HH:MM:SS
+end_time="$4"    # Format: HH:MM:SS
+
+# Run ffmpeg to clip the video
+ffmpeg -i "$input_file" -ss "$start_time" -to "$end_time" -c:v libx264 -crf 18 -c:a copy "$output_file"
