@@ -75,6 +75,7 @@ def create_link_safely(link, file, stats):
     print(f"Creating symlink {link} -> {file}")
     isdir = os.path.isdir(file)
     file = os.path.abspath(file)
+    pathlib.Path(link).unlink(missing_ok=True)
     os.symlink(file, link, target_is_directory=isdir)
     stats["links created"] += 1
 
