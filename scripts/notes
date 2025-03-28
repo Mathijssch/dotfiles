@@ -242,6 +242,17 @@ def list_notebooks(name: str, notebooks: dict, **kwargs):
         fmt(line, widths)
 
 
+def _open_in_editor(path: Pathlike):
+    import subprocess
+    editor = os.environ.get('EDITOR', DEFAULT_EDITOR)
+    subprocess.call([editor, path])
+
+
+def configure_notebooks(*args, **kwargs):
+    notes_repo = get_notes_repo_path()
+    _open_in_editor(notes_repo)
+
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Open your notes.")
@@ -252,7 +263,8 @@ if __name__ == "__main__":
         "serve": serve_notebook,
         "edit": open_notebook,
         "sketch": sketch_notebook,
-        "list": list_notebooks
+        "list": list_notebooks,
+        "config": configure_notebooks
     }
 
     parser.add_argument(dest="cmd", default="edit", nargs="?", choices=list(commands.keys()), help="Action to perform")
