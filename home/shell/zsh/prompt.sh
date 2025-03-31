@@ -29,3 +29,7 @@ zstyle ':vcs_info:git:*' formats '%b '
 
 setopt PROMPT_SUBST
 PROMPT='%F{blue}%~%f %F{$(get_git_color)}${vcs_info_msg_0_}%f$ '
+
+
+bindkey ";3D" backward-word
+bindkey ";3C" forward-word
